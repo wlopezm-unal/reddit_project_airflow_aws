@@ -40,28 +40,38 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      # Nuevos pasos para instalar Docker y Docker Compose
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       
-      - name: Deploy Docker Compose
+      - name: Install Docker Compose
         run: |
-          docker-compose up -d --build
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
+          docker compose version
+      
+      - name: Deploy with Docker Compose
+        run: |
+          docker compose up -d --build
           echo "Waiting for containers to be healthy..."
           sleep 60  # Aumentamos el tiempo de espera para asegurar que los servicios estén listos
 
       - name: Check Docker containers status
         run: |
           docker ps
-          docker-compose ps
-          docker-compose logs airflow-webserver
-          docker-compose logs airflow-scheduler
+          docker compose ps
+          docker compose logs airflow-webserver
+          docker compose logs airflow-scheduler
       
       - name: Verify Postgres Connection
         run: |
-          docker-compose exec -T airflow-webserver airflow db check
-          docker-compose exec -T airflow-webserver airflow connections list
+          docker compose exec -T airflow-webserver airflow db check
+          docker compose exec -T airflow-webserver airflow connections list
 
       - name: Test DAGs
         run: |
-          docker-compose exec -T airflow-webserver python -c "
+          docker compose exec -T airflow-webserver python -c "
           from airflow.models import DagBag
           dag_bag = DagBag()
           if dag_bag.import_errors:
@@ -73,10 +83,10 @@ jobs:
 
       - name: Run DAG Tests (if any)
         run: |
-          docker-compose exec -T airflow-webserver pytest tests/dags -v || echo "No tests found"
+          docker compose exec -T airflow-webserver pytest tests/dags -v || echo "No tests found"
 
       - name: Clean up
         if: always()
         run: |
-          docker-compose down -v
+          docker compose down -v
           docker system prune -f
