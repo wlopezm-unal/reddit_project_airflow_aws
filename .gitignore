@@ -1,0 +1,15 @@
+reddit-env
+__pycache__
+logs/*
+config/*
+credentials
+# Ignorar archivos específicos dentro de la carpeta terraform
+terraform.tfvars
+terraform/.terraform
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/*.exe
+terraform/*.zip
+terraform/*.tar.gz
+terraform/*.logr

@@ -1,0 +1,9 @@
+boto3
+pandas
+numpy
+requests
+apache-airflow
+praw
+apache-airflow-providers-amazon
+
+
