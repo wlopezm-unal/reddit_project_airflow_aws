@@ -54,7 +54,7 @@ def wait_for_crawler_completion(client, crawler_name, timeout_minutes=30):
     start_time = time.time()
     while True:
         if (time.time() - start_time) > (timeout_minutes * 60):
-            raise TimeoutError(f"El crawler no terminó después de {timeout_minutes} minutos")
+            raise TimeoutError(f"Crawler no finished after of: {timeout_minutes} minutos")
             
         response = client.get_crawler(Name=crawler_name)
         state = response['Crawler']['State']
@@ -62,10 +62,10 @@ def wait_for_crawler_completion(client, crawler_name, timeout_minutes=30):
         if state == 'READY':
             last_status = response['Crawler']['LastCrawl']['Status']
             if last_status == 'SUCCEEDED':
-                print("Crawler completado exitosamente")
+                print("Crawler successfully completed")
                 break
             elif last_status in ['FAILED', 'CANCELLED']:
-                raise Exception(f"Crawler falló con estado: {last_status}")
+                raise Exception(f"Crawler fail with status: {last_status}")
                 
         time.sleep(30)
 
@@ -95,16 +95,16 @@ def run_glue_crawler():
         
         if current_state == 'READY':
             response = client.start_crawler(Name='data-pipeline-dev-raw-crawler')
-            print(f"Crawler iniciado exitosamente: {response}")
+            print(f"Crawler successfully init: {response}")
         else:
-            print(f"El crawler no está listo para iniciar. Estado actual: {current_state}")
+            print(f" Crawler it´s not ready to init. Its current status: {current_state}")
             
     except client.exceptions.CrawlerRunningException:
-        print("El crawler ya está en ejecución")
+        print(" Crawler is already run")
     except client.exceptions.EntityNotFoundException:
-        print("No se encontró el crawler especificado")
+        print("It´s found specific crawler")
     except Exception as e:
-        print(f"Error al ejecutar el crawler: {str(e)}")
+        print(f"Error to run the crawler: {str(e)}")
 
 
 #################################
