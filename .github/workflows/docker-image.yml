@@ -41,21 +41,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Nuevos pasos para instalar Docker y Docker Compose
-      - name: Set up Docker Buildx
+      # Usar la acción de GitHub para Docker
+      - name: Set up Docker
         uses: docker/setup-buildx-action@v3
-      
-      - name: Install Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose-plugin
-          docker compose version
+
+      # Usar la acción de GitHub para Docker Compose
+      - name: Set up Docker Compose
+        uses: ndeloof/install-compose-action@v0.0.1
+        with:
+          version: v2.23.3
       
       - name: Deploy with Docker Compose
         run: |
-          docker compose up -d --build
+          docker-compose up -d --build
           echo "Waiting for containers to be healthy..."
-          sleep 60  # Aumentamos el tiempo de espera para asegurar que los servicios estén listos
+          sleep 60
 
       - name: Check Docker containers status
         run: |
