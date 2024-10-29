@@ -1,0 +1,92 @@
+name: CI/CD for Airflow Project
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run Airflow containers
+        run: |
+          docker-compose up -d --build
+          sleep 30  # Dar tiempo a que los contenedores se inicien
+          docker ps  # Mostrar los contenedores en ejecución
+          docker-compose logs airflow-webserver  # Mostrar logs del webserver
+
+      - name: Check container health
+        run: |
+          docker-compose ps
+          docker-compose exec -T airflow-webserver airflow db check
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airflow_reddit
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Install Airflow and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "apache-airflow==2.7.1" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.7.1/constraints-3.12.txt"
+          pip install -r requirements.txt
+
+      - name: Set up Airflow
+        run: |
+          export AIRFLOW_HOME=$(pwd)/airflow
+          airflow db init
+          airflow users create \
+            --username admin \
+            --firstname Admin \
+            --lastname User \
+            --role Admin \
+            --email admin@example.com \
+            --password admin
+
+      - name: Test DAGs
+        run: |
+          export AIRFLOW_HOME=$(pwd)/airflow
+          python -c "
+          from airflow.models import DagBag
+          dag_bag = DagBag()
+          if dag_bag.import_errors:
+              raise Exception(f'DAG import errors: {dag_bag.import_errors}')
+          print('DAGs successfully loaded')
+          "
