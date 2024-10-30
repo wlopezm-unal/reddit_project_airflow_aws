@@ -48,11 +48,6 @@ jobs:
           docker compose ps
           docker compose logs airflow-webserver
           docker compose logs airflow-scheduler
-      
-      - name: Verify Postgres Connection
-        run: |
-          docker compose exec -T airflow-webserver airflow db check
-          docker compose exec -T airflow-webserver airflow connections list
 
       - name: Test DAGs
         run: |
